@@ -38,7 +38,7 @@ mode_t FilePermission(const std::string& path) {
 }
 
 // Test that name collisions are checked on the new link path, not the source
-// path.
+// path. See b/31782115.
 TEST(SymlinkTest, CanCreateSymlinkWithCachedSourceDirent) {
   const std::string srcname = NewTempAbsPath();
   const std::string newname = NewTempAbsPath();

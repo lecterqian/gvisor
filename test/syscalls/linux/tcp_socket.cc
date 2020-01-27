@@ -244,7 +244,7 @@ TEST_P(TcpSocketTest, ZeroWriteAllowed) {
 }
 
 // Test that a non-blocking write with a buffer that is larger than the send
-// buffer size will not actually write the whole thing at once.
+// buffer size will not actually write the whole thing at once. See b/64438887.
 TEST_P(TcpSocketTest, NonblockingLargeWrite) {
   // Set the FD to O_NONBLOCK.
   int opts;

@@ -131,7 +131,8 @@ TEST(CreateTest, CreateFailsOnDirWithoutWritePerms) {
               SyscallFailsWithErrno(EACCES));
 }
 
-// A file originally created RW, but opened RO can later be opened RW.
+// A file originally created RW, but opened RO can later be opened RW. See
+// b/65385065.
 TEST(CreateTest, OpenCreateROThenRW) {
   TempPath file(NewTempAbsPath());
 
