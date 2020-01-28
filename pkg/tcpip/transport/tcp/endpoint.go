@@ -2149,9 +2149,8 @@ func (e *endpoint) listen(backlog int) *tcpip.Error {
 
 // startAcceptedLoop sets up required state and starts a goroutine with the
 // main loop for accepted connections.
-func (e *endpoint) startAcceptedLoop(waiterQueue *waiter.Queue) {
+func (e *endpoint) startAcceptedLoop() {
 	e.mu.Lock()
-	e.waiterQueue = waiterQueue
 	e.workerRunning = true
 	e.mu.Unlock()
 	wakerInitDone := make(chan struct{})
