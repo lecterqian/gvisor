@@ -21,6 +21,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
+	"gvisor.dev/gvisor/pkg/sentry/fs/lock"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/syserror"
@@ -152,6 +153,26 @@ func (FileDescriptionDefaultImpl) Removexattr(ctx context.Context, name string) 
 	return syserror.ENOTSUP
 }
 
+// LockBSD implements FileDescriptionImpl.LockBSD.
+func (FileDescriptionDefaultImpl) LockBSD(ctx context.Context, uid lock.UniqueID, t lock.LockType, block lock.Blocker) error {
+	return syserror.EBADF
+}
+
+// UnlockBSD implements FileDescriptionImpl.UnlockBSD.
+func (FileDescriptionDefaultImpl) UnlockBSD(ctx context.Context, uid lock.UniqueID) error {
+	return syserror.EBADF
+}
+
+// LockPosix implements FileDescriptionImpl.LockPosix.
+func (FileDescriptionDefaultImpl) LockPosix(ctx context.Context, uid lock.UniqueID, t lock.LockType, rng lock.LockRange, block lock.Blocker) error {
+	return syserror.EBADF
+}
+
+// UnlockPosix implements FileDescriptionImpl.UnlockPosix.
+func (FileDescriptionDefaultImpl) UnlockPosix(ctx context.Context, uid lock.UniqueID, rng lock.LockRange) error {
+	return syserror.EBADF
+}
+
 // DirectoryFileDescriptionDefaultImpl may be embedded by implementations of
 // FileDescriptionImpl that always represent directories to obtain
 // implementations of non-directory I/O methods that return EISDIR.
@@ -175,6 +196,26 @@ func (DirectoryFileDescriptionDefaultImpl) PWrite(ctx context.Context, src userm
 // Write implements FileDescriptionImpl.Write.
 func (DirectoryFileDescriptionDefaultImpl) Write(ctx context.Context, src usermem.IOSequence, opts WriteOptions) (int64, error) {
 	return 0, syserror.EISDIR
+}
+
+// LockBSD implements FileDescriptionImpl.LockBSD.
+func (DirectoryFileDescriptionDefaultImpl) LockBSD(ctx context.Context, uid lock.UniqueID, t lock.LockType, block lock.Blocker) error {
+	return syserror.EBADF
+}
+
+// UnlockBSD implements FileDescriptionImpl.UnlockBSD.
+func (DirectoryFileDescriptionDefaultImpl) UnlockBSD(ctx context.Context, uid lock.UniqueID) error {
+	return syserror.EBADF
+}
+
+// LockPosix implements FileDescriptionImpl.LockPosix.
+func (DirectoryFileDescriptionDefaultImpl) LockPosix(ctx context.Context, uid lock.UniqueID, t lock.LockType, rng lock.LockRange, block lock.Blocker) error {
+	return syserror.EBADF
+}
+
+// UnlockPosix implements FileDescriptionImpl.UnlockPosix.
+func (DirectoryFileDescriptionDefaultImpl) UnlockPosix(ctx context.Context, uid lock.UniqueID, rng lock.LockRange) error {
+	return syserror.EBADF
 }
 
 // DentryMetadataFileDescriptionImpl may be embedded by implementations of

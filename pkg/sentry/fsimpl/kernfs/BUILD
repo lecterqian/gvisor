@@ -33,6 +33,7 @@ go_library(
         "//pkg/fspath",
         "//pkg/log",
         "//pkg/refs",
+        "//pkg/sentry/fs/lock",
         "//pkg/sentry/kernel/auth",
         "//pkg/sentry/memmap",
         "//pkg/sentry/vfs",

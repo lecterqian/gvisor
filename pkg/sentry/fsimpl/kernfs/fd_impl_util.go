@@ -17,6 +17,7 @@ package kernfs
 import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/sentry/fs/lock"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/syserror"
@@ -88,6 +89,26 @@ func (fd *GenericDirectoryFD) PWrite(ctx context.Context, src usermem.IOSequence
 
 // Release implements vfs.FileDecriptionImpl.Release.
 func (fd *GenericDirectoryFD) Release() {}
+
+// LockBSD implements vfs.FileDescriptionImpl.LockBSD.
+func (fd *GenericDirectoryFD) LockBSD(ctx context.Context, uid lock.UniqueID, t lock.LockType, block lock.Blocker) error {
+	return fd.DirectoryFileDescriptionDefaultImpl.LockBSD(ctx, uid, t, block)
+}
+
+// UnlockBSD implements vfs.FileDescriptionImpl.UnlockBSD
+func (fd *GenericDirectoryFD) UnlockBSD(ctx context.Context, uid lock.UniqueID) error {
+	return fd.DirectoryFileDescriptionDefaultImpl.UnlockBSD(ctx, uid)
+}
+
+// LockPosix implements vfs.FileDescriptionImpl.LockPosix.
+func (fd *GenericDirectoryFD) LockPosix(ctx context.Context, uid lock.UniqueID, t lock.LockType, rng lock.LockRange, block lock.Blocker) error {
+	return fd.DirectoryFileDescriptionDefaultImpl.LockPosix(ctx, uid, t, rng, block)
+}
+
+// UnlockPosix implements vfs.FileDescriptionImpl.UnlockPosix.
+func (fd *GenericDirectoryFD) UnlockPosix(ctx context.Context, uid lock.UniqueID, rng lock.LockRange) error {
+	return fd.DirectoryFileDescriptionDefaultImpl.UnlockPosix(ctx, uid, rng)
+}
 
 func (fd *GenericDirectoryFD) filesystem() *vfs.Filesystem {
 	return fd.vfsfd.VirtualDentry().Mount().Filesystem()

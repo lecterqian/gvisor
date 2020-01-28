@@ -30,6 +30,7 @@ import (
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/sentry/fs/lock"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/time"
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
@@ -152,6 +153,9 @@ type inode struct {
 	// Only meaningful for device special files.
 	rdevMajor uint32
 	rdevMinor uint32
+
+	// Advisory file locks, which lock at the inode level.
+	locks lock.FileLocks
 
 	impl interface{} // immutable
 }
@@ -350,6 +354,44 @@ func (i *inode) setStat(stat linux.Statx) error {
 	}
 	i.mu.Unlock()
 	return nil
+}
+
+// TODO(gvisor.dev/issue/1480): support file locking for file types other than regular.
+func (i *inode) lockBSD(uid lock.UniqueID, t lock.LockType, block lock.Blocker) error {
+	switch i.impl.(type) {
+	case *regularFile:
+		return i.locks.LockBSD(uid, t, block)
+	}
+	return syserror.EBADF
+}
+
+// TODO(gvisor.dev/issue/1480): support file locking for file types other than regular.
+func (i *inode) unlockBSD(uid lock.UniqueID) error {
+	switch i.impl.(type) {
+	case *regularFile:
+		i.locks.UnlockBSD(uid)
+		return nil
+	}
+	return syserror.EBADF
+}
+
+// TODO(gvisor.dev/issue/1480): support file locking for file types other than regular.
+func (i *inode) lockPosix(uid lock.UniqueID, t lock.LockType, rng lock.LockRange, block lock.Blocker) error {
+	switch i.impl.(type) {
+	case *regularFile:
+		return i.locks.LockPosix(uid, t, rng, block)
+	}
+	return syserror.EBADF
+}
+
+// TODO(gvisor.dev/issue/1480): support file locking for file types other than regular.
+func (i *inode) unlockPosix(uid lock.UniqueID, rng lock.LockRange) error {
+	switch i.impl.(type) {
+	case *regularFile:
+		i.locks.UnlockPosix(uid, rng)
+		return nil
+	}
+	return syserror.EBADF
 }
 
 // allocatedBlocksForSize returns the number of 512B blocks needed to

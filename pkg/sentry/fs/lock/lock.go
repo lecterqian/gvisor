@@ -55,6 +55,7 @@ import (
 	"syscall"
 
 	"gvisor.dev/gvisor/pkg/sync"
+	"gvisor.dev/gvisor/pkg/syserror"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
@@ -461,4 +462,51 @@ func ComputeRange(start, length, offset int64) (LockRange, error) {
 	}
 	// Offset is guaranteed to be positive at this point.
 	return LockRange{Start: uint64(offset), End: end}, nil
+}
+
+// FileLocks supports Posix and BSD style locks, which correspond to fcntl(2)
+// and flock(2) respectively in Linux. It can be embedded into various file
+// implementations for VFS2 that support locking.
+//
+// Note that in Linux these two types of locks are _not_ cooperative, because
+// race and deadlock conditions make merging them prohibitive. We do the same
+// and keep them oblivious to each other.
+type FileLocks struct {
+	// BSD is a set of BSD-style advisory file wide locks, see flock(2).
+	bsd Locks
+
+	// Posix is a set of POSIX-style regional advisory locks, see fcntl(2).
+	posix Locks
+}
+
+// LockBSD tries to acquire a BSD-style lock on the entire file.
+func (fl *FileLocks) LockBSD(uid UniqueID, t LockType, block Blocker) error {
+	if fl.bsd.LockRegion(uid, t, LockRange{0, LockEOF}, block) {
+		return nil
+	}
+	return syserror.ErrWouldBlock
+}
+
+// UnlockBSD releases a BSD-style lock on the entire file.
+//
+// This operation is always successful, even if there did not exist a lock on
+// the requested region held by uid in the first place.
+func (fl *FileLocks) UnlockBSD(uid UniqueID) {
+	fl.bsd.UnlockRegion(uid, LockRange{0, LockEOF})
+}
+
+// LockPosix tries to acquire a Posix-style lock on a file region.
+func (fl *FileLocks) LockPosix(uid UniqueID, t LockType, rng LockRange, block Blocker) error {
+	if fl.posix.LockRegion(uid, t, rng, block) {
+		return nil
+	}
+	return syserror.ErrWouldBlock
+}
+
+// UnlockPosix releases a Posix-style lock on a file region.
+//
+// This operation is always successful, even if there did not exist a lock on
+// the requested region held by uid in the first place.
+func (fl *FileLocks) UnlockPosix(uid UniqueID, rng LockRange) {
+	fl.posix.UnlockRegion(uid, rng)
 }
