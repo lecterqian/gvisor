@@ -304,6 +304,7 @@ func (n *ndpDispatcher) OnDHCPv6Configuration(nicID tcpip.NICID, configuration s
 // RetransmitTimer (<1ms) values get fixed to the default RetransmitTimer of 1s.
 func TestDADResolve(t *testing.T) {
 	const nicID = 1
+	snmc := header.SolicitedNodeAddr(addr1)
 
 	tests := []struct {
 		name                    string
@@ -413,14 +414,18 @@ func TestDADResolve(t *testing.T) {
 					t.Fatalf("got Proto = %d, want = %d", p.Proto, header.IPv6ProtocolNumber)
 				}
 
-				// Check NDP packet.
+				// Check NDP NS packet.
+				//
+				// As per RFC 4861 section 4.3, a possible option is the Source Link
+				// Layer option, but this option MUST NOT be included when the source
+				// address of the packet is the unspecified address.
 				checker.IPv6(t, p.Pkt.Header.View().ToVectorisedView().First(),
+					checker.SrcAddr(header.IPv6Any),
+					checker.DstAddr(snmc),
 					checker.TTL(header.NDPHopLimit),
 					checker.NDPNS(
 						checker.NDPNSTargetAddress(addr1),
-						checker.NDPNSOptions([]header.NDPOption{
-							header.NDPSourceLinkLayerAddressOption(linkAddr1),
-						}),
+						checker.NDPNSOptions(nil),
 					))
 			}
 		})
